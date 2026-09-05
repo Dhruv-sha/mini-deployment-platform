@@ -29,11 +29,8 @@ pipeline {
         stage('Detect Application') {
             steps {
                 sh '''
-                    chmod +x scripts/detect-app.sh
-
-                    cd application
-
-                    ../scripts/detect-app.sh
+                    chmod +x platform/scripts/detect-app.sh
+                    ./platform/scripts/detect-app.sh
                 '''
             }
         }
