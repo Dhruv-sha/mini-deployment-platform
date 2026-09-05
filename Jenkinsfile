@@ -1,32 +1,53 @@
 pipeline {
+
     agent any
 
     parameters {
         string(
             name: 'REPO_URL',
-            defaultValue: 'https://github.com/Dhruv-sha/nodejs-application-deploy-github-actions.git',
             description: 'GitHub repository URL to deploy',
             trim: true
         )
     }
 
     stages {
-        stage('Checkout Application') {
+
+        stage('Checkout Platform') {
             steps {
-                echo "Cloning repository: ${params.REPO_URL}"
-                
-                // Explicitly specify branch: 'main'
-                git url: params.REPO_URL, branch: 'main'
+                checkout scm
             }
         }
 
-        stage('Verify Repository') {
+        stage('Checkout Application') {
+            steps {
+                dir('application') {
+                    git url: params.REPO_URL, branch:'main'
+                }
+            }
+        }
+
+        stage('Detect Application') {
             steps {
                 sh '''
-                    echo "Repository cloned successfully"
+                    chmod +x scripts/detect-app.sh
+
+                    cd application
+
+                    ../scripts/detect-app.sh
+                '''
+            }
+        }
+
+        stage('Verify') {
+            steps {
+                sh '''
                     echo ""
-                    echo "Files in repository:"
+                    echo "Platform:"
                     ls -la
+
+                    echo ""
+                    echo "Application:"
+                    ls -la application
                 '''
             }
         }
