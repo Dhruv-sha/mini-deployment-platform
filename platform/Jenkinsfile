@@ -1,6 +1,6 @@
 pipeline {
 
-    agent any
+    agent any    
 
     parameters {
         string(
@@ -15,16 +15,28 @@ pipeline {
 
         stage('Checkout Platform') {
             steps {
-                checkout scm
+                dir('platform') {
+                    checkout scm
+                }
+            }
+        }
+
+        stage('Checkout Application') {
+            steps {
+                dir('application') {
+                    git url: params.REPO_URL
+                }
             }
         }
 
         stage('Detect Application') {
             steps {
-                sh '''
-                    chmod +x platform/scripts/detect-app.sh
-                    cd application && ../platform/scripts/detect-app.sh
-                '''
+                dir('application') {
+                    sh '''
+                        chmod +x ../platform/scripts/detect-app.sh
+                        ../platform/scripts/detect-app.sh
+                    '''
+                }
             }
         }
 
@@ -32,11 +44,15 @@ pipeline {
             steps {
                 sh '''
                     echo ""
-                    echo "Platform:"
+                    echo "===== WORKSPACE ====="
                     ls -la
 
                     echo ""
-                    echo "Application:"
+                    echo "===== PLATFORM ====="
+                    ls -la platform
+
+                    echo ""
+                    echo "===== APPLICATION ====="
                     ls -la application
                 '''
             }
