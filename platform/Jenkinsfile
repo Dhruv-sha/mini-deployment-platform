@@ -24,7 +24,7 @@ pipeline {
         stage('Checkout Application') {
             steps {
                 dir('application') {
-                    git url: params.REPO_URL
+                    git url: params.REPO_URL, branch:'main'
                 }
             }
         }
