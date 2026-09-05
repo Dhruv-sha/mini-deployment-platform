@@ -5,6 +5,7 @@ pipeline {
     parameters {
         string(
             name: 'REPO_URL',
+            defaultValue: 'https://github.com/Dhruv-sha/nodejs-application-deploy-github-actions.git',
             description: 'GitHub repository URL to deploy',
             trim: true
         )
@@ -23,15 +24,6 @@ pipeline {
                 sh '''
                     chmod +x platform/scripts/detect-app.sh
                     cd application && ../platform/scripts/detect-app.sh
-                '''
-            }
-        }
-
-        stage('Detect Application') {
-            steps {
-                sh '''
-                    chmod +x platform/scripts/detect-app.sh
-                    ./platform/scripts/detect-app.sh
                 '''
             }
         }
