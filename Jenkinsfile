@@ -1,11 +1,22 @@
 pipeline {
+
     agent any
+
+    parameters {
+        string(
+            name: 'REPO_URL',
+            description: 'GitHub repository URL to deploy',
+            trim: true
+        )
+    }
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Application') {
             steps {
-                checkout scm
+                echo "Cloning repository: ${params.REPO_URL}"
+
+                git url: params.REPO_URL
             }
         }
 
@@ -13,7 +24,8 @@ pipeline {
             steps {
                 sh '''
                     echo "Repository cloned successfully"
-                    echo "Files in workspace:"
+                    echo ""
+                    echo "Files in repository:"
                     ls -la
                 '''
             }
