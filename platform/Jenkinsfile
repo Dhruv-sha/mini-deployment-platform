@@ -47,6 +47,25 @@ pipeline {
             }
         }
 
+        stage('Generate Dockerfile') {
+            steps {
+                script {
+
+                    if (env.APP_TYPE == 'node') {
+
+                        sh '''
+                            cp platform/templates/node/Dockerfile application/Dockerfile
+                        '''
+
+                        echo "Node.js Dockerfile generated."
+
+                    } else {
+                        error "Dockerfile generation not supported for: ${env.APP_TYPE}"
+                    }
+                }
+            }
+        }
+
         stage('Verify') {
             steps {
                 sh '''
@@ -61,6 +80,10 @@ pipeline {
                     echo ""
                     echo "===== APPLICATION ====="
                     ls -la application
+
+                    echo ""
+                    echo "===== GENERATED DOCKERFILE ====="
+                    cat application/Dockerfile
                 '''
             }
         }
