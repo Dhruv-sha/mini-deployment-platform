@@ -1,9 +1,8 @@
 pipeline {
 
-    agent any
+    agent any    
 
     environment {
-        // Points Docker CLI directly to the mounted UNIX socket
         DOCKER_HOST = 'unix:///var/run/docker.sock'
         DOCKER_TLS_VERIFY = ''
         DOCKER_CERT_PATH = ''
@@ -20,12 +19,6 @@ pipeline {
 
     stages {
 
-        stage('Clean Workspace') {
-            steps {
-                cleanWs()
-            }
-        }
-
         stage('Checkout Platform') {
             steps {
                 dir('platform') {
@@ -37,7 +30,7 @@ pipeline {
         stage('Checkout Application') {
             steps {
                 dir('application') {
-                    git url: params.REPO_URL, branch: 'main'
+                    git url: params.REPO_URL, branch:'main'
                 }
             }
         }
@@ -46,26 +39,13 @@ pipeline {
             steps {
                 script {
                     dir('application') {
+
                         sh 'chmod +x ../platform/scripts/detect-app.sh'
-                        
-                        // Execute detection script and filter output for APP_TYPE
-                        def rawOutput = sh(
+
+                        env.APP_TYPE = sh(
                             script: '../platform/scripts/detect-app.sh',
                             returnStdout: true
                         ).trim()
-
-                        // Extract 'node', 'python', etc., from the script output log
-                        if (rawOutput.contains('APP_TYPE=node') || rawOutput.contains('Node.js')) {
-                            env.APP_TYPE = 'node'
-                        } else if (rawOutput.contains('APP_TYPE=python') || rawOutput.contains('Python')) {
-                            env.APP_TYPE = 'python'
-                        } else if (rawOutput.contains('APP_TYPE=java') || rawOutput.contains('Java')) {
-                            env.APP_TYPE = 'java'
-                        } else if (rawOutput.contains('APP_TYPE=go') || rawOutput.contains('Go')) {
-                            env.APP_TYPE = 'go'
-                        } else {
-                            env.APP_TYPE = 'unknown'
-                        }
                     }
 
                     echo "Application type detected: ${env.APP_TYPE}"
@@ -76,9 +56,15 @@ pipeline {
         stage('Generate Dockerfile') {
             steps {
                 script {
+
                     if (env.APP_TYPE == 'node') {
-                        sh 'cp platform/templates/node/Dockerfile application/Dockerfile'
-                        echo "Node.js Dockerfile generated successfully."
+
+                        sh '''
+                            cp platform/templates/node/Dockerfile application/Dockerfile
+                        '''
+
+                        echo "Node.js Dockerfile generated."
+
                     } else {
                         error "Dockerfile generation not supported for: ${env.APP_TYPE}"
                     }
@@ -89,11 +75,15 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
+
                     def imageName = "minideploy/app:${env.BUILD_NUMBER}"
+
                     echo "Building Docker image: ${imageName}"
 
                     dir('application') {
-                        sh "docker build -t ${imageName} ."
+                        sh """
+                            docker build -t ${imageName} .
+                        """
                     }
                 }
             }
