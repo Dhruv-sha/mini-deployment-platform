@@ -164,17 +164,6 @@ pipeline {
             }
         }
 
-        stage('Verify Kubernetes Setup & Manifests') {
-            steps {
-                script {
-                    echo "===== Checking Kubernetes Connection ====="
-                    sh 'kubectl get nodes'
-
-                    echo "===== Validating Manifests (Dry Run) ====="
-                    sh 'kubectl apply --dry-run=client -f application/k8s/'
-                }
-            }
-        }
 
         stage('Verify Kubernetes Manifests') {
             steps {
@@ -189,6 +178,14 @@ pipeline {
                     echo ""
                     echo "--- service.yaml ---"
                     cat application/k8s/service.yaml
+                '''
+            }
+        }
+
+        stage('Validate Kubernetes Manifests') {
+            steps {
+                sh '''
+                    kubectl apply --dry-run=client -f application/k8s/
                 '''
             }
         }
