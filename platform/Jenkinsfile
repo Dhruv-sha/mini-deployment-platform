@@ -123,6 +123,33 @@ pipeline {
             }
         }
 
+        stage('Generate Kubernetes Deployment') {
+            steps {
+                script {
+
+                    def imageName = "${params.DOCKER_USERNAME}/minideploy-app:${env.BUILD_NUMBER}"
+
+                    def appName = sh(
+                        script: "./platform/scripts/get-app-name.sh '${params.REPO_URL}'",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Application name: ${appName}"
+                    echo "Docker image: ${imageName}"
+
+                    sh """
+                        mkdir -p application/k8s
+
+                        cp platform/templates/k8s/deployment.yaml application/k8s/deployment.yaml
+
+                        sed -i "s/APP_NAME/${appName}/g" application/k8s/deployment.yaml
+                        sed -i "s|DOCKER_IMAGE|${imageName}|g" application/k8s/deployment.yaml
+                        sed -i "s/APP_PORT/3000/g" application/k8s/deployment.yaml
+                    """
+                }
+            }
+        }
+
         stage('Verify') {
             steps {
                 sh '''
