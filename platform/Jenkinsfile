@@ -31,11 +31,18 @@ pipeline {
 
         stage('Detect Application') {
             steps {
-                dir('application') {
-                    sh '''
-                        chmod +x ../platform/scripts/detect-app.sh
-                        ../platform/scripts/detect-app.sh
-                    '''
+                script {
+                    dir('application') {
+
+                        sh 'chmod +x ../platform/scripts/detect-app.sh'
+
+                        env.APP_TYPE = sh(
+                            script: '../platform/scripts/detect-app.sh',
+                            returnStdout: true
+                        ).trim()
+                    }
+
+                    echo "Application type detected: ${env.APP_TYPE}"
                 }
             }
         }
