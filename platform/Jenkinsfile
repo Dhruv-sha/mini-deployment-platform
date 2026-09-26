@@ -123,7 +123,7 @@ pipeline {
             }
         }
 
-        stage('Generate Kubernetes Deployment') {
+        stage('Generate Kubernetes Manifests') {
             steps {
                 script {
 
@@ -142,12 +142,36 @@ pipeline {
                     sh """
                         mkdir -p application/k8s
 
-                        cp platform/templates/k8s/deployment.yaml application/k8s/deployment.yaml
+                        cp platform/templates/k8s/deployment.yaml \
+                        application/k8s/deployment.yaml
 
-                        sed -i "s/APP_NAME/${appName}/g" application/k8s/deployment.yaml
-                        sed -i "s|DOCKER_IMAGE|${imageName}|g" application/k8s/deployment.yaml
-                        sed -i "s/APP_PORT/3000/g" application/k8s/deployment.yaml
+                        cp platform/templates/k8s/service.yaml \
+                        application/k8s/service.yaml
+
+                        sed -i "s/APP_NAME/${appName}/g" \
+                            application/k8s/deployment.yaml
+
+                        sed -i "s|DOCKER_IMAGE|${imageName}|g" \
+                            application/k8s/deployment.yaml
+
+                        sed -i "s/APP_PORT/3000/g" \
+                            application/k8s/deployment.yaml
+
+                        sed -i "s/APP_NAME/${appName}/g" \
+                            application/k8s/service.yaml
                     """
+                }
+            }
+        }
+
+        stage('Verify Kubernetes Setup & Manifests') {
+            steps {
+                script {
+                    echo "===== Checking Kubernetes Connection ====="
+                    sh 'kubectl get nodes'
+
+                    echo "===== Validating Manifests (Dry Run) ====="
+                    sh 'kubectl apply --dry-run=client -f application/k8s/'
                 }
             }
         }
@@ -156,8 +180,15 @@ pipeline {
             steps {
                 sh '''
                     echo ""
-                    echo "===== GENERATED KUBERNETES DEPLOYMENT ====="
+                    echo "===== KUBERNETES MANIFESTS ====="
+
+                    echo ""
+                    echo "--- deployment.yaml ---"
                     cat application/k8s/deployment.yaml
+
+                    echo ""
+                    echo "--- service.yaml ---"
+                    cat application/k8s/service.yaml
                 '''
             }
         }
