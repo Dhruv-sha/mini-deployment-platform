@@ -12,6 +12,6 @@ spec:
     app: APP_NAME
 
   ports:
-    - protocol: TCP
-      port: 3000
-      targetPort: 3000
+  - protocol: TCP
+    port: APP_PORT
+    targetPort: APP_PORT

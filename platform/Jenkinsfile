@@ -22,6 +22,12 @@ pipeline {
             description: 'Docker Hub username',
             trim: true
         )
+        string(
+            name: 'APP_PORT',
+            defaultValue: '3000',
+            description: 'Port on which the application listens',
+            trim: true
+        )
     }
 
     stages {
@@ -148,17 +154,12 @@ pipeline {
                         cp platform/templates/k8s/service.yaml \
                         application/k8s/service.yaml
 
-                        sed -i "s/APP_NAME/${appName}/g" \
-                            application/k8s/deployment.yaml
+                        sed -i "s/APP_NAME/${appName}/g" application/k8s/deployment.yaml
+                        sed -i "s|DOCKER_IMAGE|${imageName}|g" application/k8s/deployment.yaml
+                        sed -i "s/APP_PORT/${params.APP_PORT}/g" application/k8s/deployment.yaml
 
-                        sed -i "s|DOCKER_IMAGE|${imageName}|g" \
-                            application/k8s/deployment.yaml
-
-                        sed -i "s/APP_PORT/3000/g" \
-                            application/k8s/deployment.yaml
-
-                        sed -i "s/APP_NAME/${appName}/g" \
-                            application/k8s/service.yaml
+                        sed -i "s/APP_NAME/${appName}/g" application/k8s/service.yaml
+                        sed -i "s/APP_PORT/${params.APP_PORT}/g" application/k8s/service.yaml
                     """
                 }
             }
@@ -195,6 +196,21 @@ pipeline {
                 sh '''
                     kubectl apply -f application/k8s/
                 '''
+            }
+        }
+
+        stage('Wait for Deployment') {
+            steps {
+                script {
+                    def appName = sh(
+                        script: "./platform/scripts/get-app-name.sh '${params.REPO_URL}'",
+                        returnStdout: true
+                    ).trim()
+
+                    sh """
+                        kubectl rollout status deployment/${appName} --timeout=120s
+                    """
+                }
             }
         }
 
