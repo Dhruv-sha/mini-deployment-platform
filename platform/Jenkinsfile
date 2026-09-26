@@ -18,7 +18,7 @@ pipeline {
         
         string(
             name: 'DOCKER_USERNAME',
-            defaultValue: '',
+            defaultValue: 'dhruvshah55',
             description: 'Docker Hub username',
             trim: true
         )
