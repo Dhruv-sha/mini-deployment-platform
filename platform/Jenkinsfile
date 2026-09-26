@@ -150,6 +150,16 @@ pipeline {
             }
         }
 
+        stage('Verify Kubernetes Manifests') {
+            steps {
+                sh '''
+                    echo ""
+                    echo "===== GENERATED KUBERNETES DEPLOYMENT ====="
+                    cat application/k8s/deployment.yaml
+                '''
+            }
+        }
+
         stage('Verify') {
             steps {
                 sh '''
