@@ -28,6 +28,13 @@ pipeline {
             description: 'Port on which the application listens',
             trim: true
         )
+
+        string(
+            name: 'START_COMMAND',
+            defaultValue: 'npm start',
+            description: 'Command used to start the application inside the container',
+            trim: true
+        )
     }
 
     stages {
@@ -43,6 +50,24 @@ pipeline {
             steps {
                 dir('application') {
                     git url: params.REPO_URL, branch: 'main'
+                }
+            }
+        }
+
+        stage('Validate Parameters') {
+            steps {
+                script {
+                    if (!(params.APP_PORT ==~ /^[0-9]+$/)) {
+                        error "APP_PORT must be a number."
+                    }
+
+                    def port = params.APP_PORT.toInteger()
+
+                    if (port < 1 || port > 65535) {
+                        error "APP_PORT must be between 1 and 65535."
+                    }
+
+                    echo "Application port: ${port}"
                 }
             }
         }
@@ -69,17 +94,33 @@ pipeline {
             steps {
                 script {
 
+                    def templatePath = ""
+
                     if (env.APP_TYPE == 'node') {
+                        templatePath = "platform/templates/node/Dockerfile"
 
-                        sh '''
-                            cp platform/templates/node/Dockerfile application/Dockerfile
-                        '''
+                    } else if (env.APP_TYPE == 'python') {
+                        templatePath = "platform/templates/python/Dockerfile"
 
-                        echo "Node.js Dockerfile generated."
+                    } else if (env.APP_TYPE == 'java') {
+                        templatePath = "platform/templates/java/Dockerfile"
+
+                    } else if (env.APP_TYPE == 'go') {
+                        templatePath = "platform/templates/go/Dockerfile"
 
                     } else {
                         error "Dockerfile generation not supported for: ${env.APP_TYPE}"
                     }
+
+                    sh """
+                        cp ${templatePath} application/Dockerfile
+
+                        sed -i "s/APP_PORT/${params.APP_PORT}/g" application/Dockerfile
+
+                        sed -i 's|START_COMMAND|${params.START_COMMAND}|g' application/Dockerfile
+                    """
+
+                    echo "Dockerfile generated for ${env.APP_TYPE}"
                 }
             }
         }
