@@ -21,16 +21,15 @@ pipeline {
 
         stage('Checkout Platform') {
             steps {
-                dir('platform') {
-                    checkout scm
-                }
+                // Removed dir('platform') to prevent nested platform/platform directories
+                checkout scm
             }
         }
 
         stage('Checkout Application') {
             steps {
                 dir('application') {
-                    git url: params.REPO_URL, branch:'main'
+                    git url: params.REPO_URL, branch: 'main'
                 }
             }
         }
