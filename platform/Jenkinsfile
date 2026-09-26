@@ -198,24 +198,20 @@ pipeline {
             }
         }
 
-        stage('Verify') {
+        stage('Verify Kubernetes Deployment') {
             steps {
                 sh '''
                     echo ""
-                    echo "===== WORKSPACE ====="
-                    ls -la
+                    echo "===== DEPLOYMENTS ====="
+                    kubectl get deployments
 
                     echo ""
-                    echo "===== PLATFORM ====="
-                    ls -la platform
+                    echo "===== PODS ====="
+                    kubectl get pods
 
                     echo ""
-                    echo "===== APPLICATION ====="
-                    ls -la application
-
-                    echo ""
-                    echo "===== GENERATED DOCKERFILE ====="
-                    cat application/Dockerfile
+                    echo "===== SERVICES ====="
+                    kubectl get services
                 '''
             }
         }
