@@ -15,6 +15,13 @@ pipeline {
             description: 'GitHub repository URL to deploy',
             trim: true
         )
+        
+        string(
+            name: 'DOCKER_USERNAME',
+            defaultValue: '',
+            description: 'Docker Hub username',
+            trim: true
+        )
     }
 
     stages {
@@ -75,13 +82,41 @@ pipeline {
             steps {
                 script {
 
-                    def imageName = "minideploy/app:${env.BUILD_NUMBER}"
+                    def imageName = "${params.DOCKER_USERNAME}/minideploy-app:${env.BUILD_NUMBER}"
 
                     echo "Building Docker image: ${imageName}"
 
                     dir('application') {
                         sh """
                             docker build -t ${imageName} .
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+
+                    def imageName = "${params.DOCKER_USERNAME}/minideploy-app:${env.BUILD_NUMBER}"
+
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'dockerhub-creds',
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_TOKEN'
+                        )
+                    ]) {
+
+                        sh """
+                            echo "\$DOCKER_TOKEN" | docker login \
+                                -u "\$DOCKER_USER" \
+                                --password-stdin
+
+                            docker push ${imageName}
+
+                            docker logout
                         """
                     }
                 }
