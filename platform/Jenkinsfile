@@ -129,6 +129,8 @@ pipeline {
 
                     def imageName = "${params.DOCKER_USERNAME}/minideploy-app:${env.BUILD_NUMBER}"
 
+                    sh 'chmod +x platform/scripts/get-app-name.sh'
+
                     def appName = sh(
                         script: "./platform/scripts/get-app-name.sh '${params.REPO_URL}'",
                         returnStdout: true
